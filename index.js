@@ -1,4 +1,4 @@
-var ReadWriteStream = require("read-write-stream")
+var through = require("through")
 
 module.exports = DataChannel
 
@@ -8,10 +8,9 @@ function DataChannel(channel) {
         return channel._stream
     }
 
-    var queue = ReadWriteStream(write, end)
+    var stream = through(write, end)
         , ready = false
         , buffer = []
-        , stream = queue.stream
 
     stream.meta = channel.label
 
@@ -46,13 +45,13 @@ function DataChannel(channel) {
     }
 
     function onclose(event) {
-        queue.end()
+        stream.end()
         stream.emit("finish")
         stream.emit("close", event)
     }
 
     function onmessage(message) {
-        queue.push(message.data)
+        stream.queue(message.data)
     }
 
     function onerror(err) {
